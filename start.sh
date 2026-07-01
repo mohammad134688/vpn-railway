@@ -16,8 +16,7 @@ echo "  Method: $SS_METHOD"
 echo "  Password: $SS_PASSWORD"
 echo "========================================="
 
-# Use printf for safe JSON generation with special characters
-printf '{"server":"0.0.0.0","server_port":%s,"password":"%s","method":"%s","mode":"tcp_and_udp","fast_open":false,"no_delay":true,"dns":["8.8.8.8","8.8.4.4"]}' \
+printf '{"server":"0.0.0.0","server_port":%s,"password":"%s","method":"%s","mode":"tcp_and_udp","fast_open":false}' \
   "$SS_PORT" "$SS_PASSWORD" "$SS_METHOD" > /tmp/config.json
 
 exec ssserver -c /tmp/config.json
