@@ -1,9 +1,4 @@
-FROM alpine:3.20
-
-RUN apk add --no-cache \
-    shadowsocks-libev \
-    curl \
-    bash
+FROM ghcr.io/shadowsocks/shadowsocks-rust:v1.23.0
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
