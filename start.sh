@@ -1,25 +1,31 @@
 #!/bin/bash
-set -e
+set -ex
 
-# Generate UUID if not set
 if [ -z "$VLESS_UUID" ]; then
-    VLESS_UUID=$(cat /proc/sys/kernel/random/uuid)
+    VLESS_UUID="c1413fc0-716d-47d0-9b33-cfc9d0999a8d"
 fi
 
 LISTEN_PORT=${PORT:-8080}
 
 echo "========================================="
-echo "  Xray VLESS + WebSocket"
-echo "  Port: $LISTEN_PORT"
+echo "  Xray VLESS + WebSocket (nginx)"
+echo "  External Port: $LISTEN_PORT"
+echo "  Xray Port: 10080"
 echo "  UUID: $VLESS_UUID"
 echo "========================================="
 
+# Update nginx to listen on Railway's PORT
+sed -i "s/listen 8080;/listen $LISTEN_PORT;/" /etc/nginx/nginx.conf
+
 cat > /tmp/config.json << EOF
 {
+    "log": {
+        "loglevel": "warning"
+    },
     "inbounds": [
         {
-            "listen": "0.0.0.0",
-            "port": $LISTEN_PORT,
+            "listen": "127.0.0.1",
+            "port": 10080,
             "protocol": "vless",
             "settings": {
                 "clients": [
@@ -49,4 +55,9 @@ EOF
 echo "Config:"
 cat /tmp/config.json
 
+# Start nginx
+nginx -t
+nginx
+
+# Start Xray
 exec xray run -c /tmp/config.json
