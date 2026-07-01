@@ -16,18 +16,8 @@ echo "  Method: $SS_METHOD"
 echo "  Password: $SS_PASSWORD"
 echo "========================================="
 
-# Create config
-cat > /tmp/config.json << EOF
-{
-    "server": "0.0.0.0",
-    "server_port": $SS_PORT,
-    "password": "$SS_PASSWORD",
-    "method": "$SS_METHOD",
-    "mode": "tcp_and_udp",
-    "fast_open": false,
-    "no_delay": true,
-    "dns": ["8.8.8.8", "8.8.4.4"]
-}
-EOF
+# Use printf for safe JSON generation with special characters
+printf '{"server":"0.0.0.0","server_port":%s,"password":"%s","method":"%s","mode":"tcp_and_udp","fast_open":false,"no_delay":true,"dns":["8.8.8.8","8.8.4.4"]}' \
+  "$SS_PORT" "$SS_PASSWORD" "$SS_METHOD" > /tmp/config.json
 
 exec ssserver -c /tmp/config.json
