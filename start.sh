@@ -1,23 +1,52 @@
 #!/bin/bash
 set -e
 
-if [ -z "$SS_PASSWORD" ]; then
-    export SS_PASSWORD=$(head -c 16 /dev/urandom | base64 | tr -d '/+=' | head -c 16)
+# Generate UUID if not set
+if [ -z "$VLESS_UUID" ]; then
+    VLESS_UUID=$(cat /proc/sys/kernel/random/uuid)
 fi
 
-LISTEN_PORT=${PORT:-8388}
-SS_METHOD=${SS_METHOD:-aes-256-gcm}
+LISTEN_PORT=${PORT:-8080}
 
 echo "========================================="
-echo "  Shadowsocks + v2ray-plugin (WSS)"
+echo "  Xray VLESS + WebSocket"
 echo "  Port: $LISTEN_PORT"
-echo "  Method: $SS_METHOD"
-echo "  Password: $SS_PASSWORD"
+echo "  UUID: $VLESS_UUID"
 echo "========================================="
 
-exec ssserver \
-  --server-addr "0.0.0.0:$LISTEN_PORT" \
-  --encrypt-method "$SS_METHOD" \
-  --password "$SS_PASSWORD" \
-  --plugin v2ray-plugin \
-  --plugin-opts "server;path=/ws;loglevel=none"
+cat > /tmp/config.json << EOF
+{
+    "inbounds": [
+        {
+            "listen": "0.0.0.0",
+            "port": $LISTEN_PORT,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "$VLESS_UUID",
+                        "flow": ""
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "ws",
+                "wsSettings": {
+                    "path": "/ws"
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        }
+    ]
+}
+EOF
+
+echo "Config:"
+cat /tmp/config.json
+
+exec xray run -c /tmp/config.json
